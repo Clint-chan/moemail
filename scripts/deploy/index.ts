@@ -203,7 +203,11 @@ const migrateDatabase = () => {
   try {
     execSync("pnpm run db:migrate-remote", { stdio: "inherit" });
     console.log("✅ Database migration completed successfully");
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.stderr?.includes("already exists")) {
+      console.log("✅ Database already migrated, skipping...");
+      return;
+    }
     console.error("❌ Database migration failed:", error);
     throw error;
   }
