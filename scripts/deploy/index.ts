@@ -201,14 +201,15 @@ const checkAndCreateDatabase = async () => {
 const migrateDatabase = () => {
   console.log("📝 Migrating remote database...");
   try {
-    execSync("pnpm run db:migrate-remote", { stdio: "inherit" });
+    execSync("pnpm run db:migrate-remote", { stdio: "pipe" });
     console.log("✅ Database migration completed successfully");
   } catch (error: any) {
-    if (error?.stderr?.includes("already exists")) {
+    const output = (error?.stdout?.toString() || "") + (error?.stderr?.toString() || "");
+    if (output.includes("already exists")) {
       console.log("✅ Database already migrated, skipping...");
       return;
     }
-    console.error("❌ Database migration failed:", error);
+    console.error("❌ Database migration failed:", output || error);
     throw error;
   }
 };
