@@ -4,7 +4,7 @@ import Google from "next-auth/providers/google"
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
 import { createDb, Db } from "./db"
 import { accounts, users, roles, userRoles } from "./schema"
-import { eq } from "drizzle-orm"
+import { eq, count } from "drizzle-orm"
 import { getRequestContext } from "@cloudflare/next-on-pages"
 import { Permission, hasPermission, ROLES, Role } from "./permissions"
 import CredentialsProvider from "next-auth/providers/credentials"
@@ -173,7 +173,11 @@ export const {
 
         if (existingRole) return
 
-        const defaultRole = await getDefaultRole()
+        // 如果是第一个用户，设为 emperor
+        const [{ value: userCount }] = await db.select({ value: count() }).from(users)
+        const isFirstUser = userCount === 1
+        const defaultRole = isFirstUser ? ROLES.EMPEROR : await getDefaultRole()
+
         const role = await findOrCreateRole(db, defaultRole)
         await assignRoleToUser(db, user.id, role.id)
       } catch (error) {
